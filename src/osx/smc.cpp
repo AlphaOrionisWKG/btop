@@ -107,6 +107,12 @@ namespace Cpu {
 		return result;
 	}
 
+	long long SMCConnection::getValue(const char* key_name) {
+		char key[5] = {0};
+		snprintf(key, sizeof(key), "%s", key_name);
+		return getSMCTemp(key);
+	}
+
 	kern_return_t SMCConnection::SMCReadKey(UInt32Char_t key, SMCVal_t *val) {
 		kern_return_t result;
 		SMCKeyData_t inputStructure;

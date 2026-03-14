@@ -25,6 +25,7 @@
 ## Index
 
 * [News](#news)
+* [Fork Support](#fork-support)
 * [Documents](#documents)
 * [Description](#description)
 * [Features](#features)
@@ -49,6 +50,40 @@ If you are considering donating, please first consider donating to:
 
 [<img src="https://images.squarespace-cdn.com/content/v1/66fd17c779966209da4359da/9dcb67db-433e-41cb-94d7-cecba280dc0b/Picture+1.png" height="100px">](https://www.qm4ua.org/)
 [<img src="https://secure2.convio.net/stccad/images/content/pagebuilder/stc-logo2022.png" width="400px">](https://donate.savethechildren.org)
+
+## Fork Support
+
+This fork targets **macOS x86_64** systems that expose GPU telemetry through the macOS `IOAccelerator` `PerformanceStatistics` interface.
+
+What this fork adds on macOS:
+
+* GPU activity / utilization
+* VRAM used / total when available
+* Temperature when available
+* Core and memory clocks when available
+* Power usage when available
+
+Current support status:
+
+* **Verified:** AMD discrete GPUs on macOS x86_64. This fork was validated on an `AMD Radeon Navi23`.
+* **Experimental:** Intel iGPU and Nvidia dGPU on macOS x86_64 when their `IOAccelerator` driver exposes the same counters.
+* **Unchanged from upstream:** Linux GPU backends and Apple Silicon GPU support remain available.
+
+Important limitations:
+
+* This fork is intended for Intel-based Macs and Hackintosh-style macOS x86_64 environments.
+* Metrics depend on what the vendor driver publishes to `IOAccelerator`, so some cards may expose fewer fields than others.
+* Intel/Nvidia support is implemented from the same telemetry path but is currently **not hardware-verified** in this fork.
+
+Recommended install flow for this fork:
+
+```bash
+git clone git@github.com:AlphaOrionisWKG/btop.git
+cd btop
+make
+sudo install -m 755 bin/btop /usr/local/bin/btop
+btop
+```
 
 
 
@@ -442,6 +477,17 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 
    Btop++ supports Nvidia and AMD GPUs and Intel IGPUs out of the box on Linux x86_64, provided you have the correct drivers and libraries.
 
+   This fork also adds a **macOS x86_64** GPU telemetry path through `IOAccelerator` `PerformanceStatistics`.
+   On macOS this is currently:
+
+ * **Verified**
+
+    AMD discrete GPUs on macOS x86_64.
+
+ * **Experimental**
+
+    Intel integrated GPUs and Nvidia discrete GPUs on macOS x86_64, provided the installed macOS driver exports matching counters through `IOAccelerator`.
+
    Gpu support for Nvidia or AMD will not work when static linking glibc (or musl, etc.)!
 
    For x86_64 Linux the flag `GPU_SUPPORT` is automatically set to `true`, to manually disable gpu support set the flag to false, like:
@@ -663,6 +709,12 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 
    ```bash
    gmake
+   ```
+
+   For this fork, install the compiled binary as `btop`:
+
+   ```bash
+   sudo install -m 755 bin/btop /usr/local/bin/btop
    ```
 
    Options for make:

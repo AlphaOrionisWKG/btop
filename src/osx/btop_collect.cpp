@@ -227,12 +227,6 @@ namespace Gpu {
 		return out;
 	}
 
-	static bool lower_contains(string haystack, string needle) {
-		haystack = str_to_lower(haystack);
-		needle = str_to_lower(needle);
-		return haystack.contains(needle);
-	}
-
 	static auto get_registry_props(io_registry_entry_t entry) -> CFRef<CFMutableDictionaryRef> {
 		CFMutableDictionaryRef props_raw = nullptr;
 		if (IORegistryEntryCreateCFProperties(entry, &props_raw, kCFAllocatorDefault, 0) != kIOReturnSuccess or not props_raw)
@@ -284,11 +278,25 @@ namespace Gpu {
 	namespace Nvml { bool shutdown() { return false; } }
 	namespace Rsmi { bool shutdown() { return false; } }
 
-	namespace AMDDiscrete {
+	namespace IOAcceleratorStats {
 		bool initialized = false;
 		size_t base_index = 0;
 		unsigned int device_count = 0;
 		vector<string> accel_matches;
+		vector<string> accel_vendors;
+
+		static string detect_vendor(string io_class) {
+			auto lower = str_to_lower(io_class);
+			if (lower == "nvaccelerator" or lower.contains("nvidia")) return "nvidia";
+			if (lower.contains("amd")) return "amd";
+			if (lower.contains("intel")) return "intel";
+			return "";
+		}
+
+		static bool vendor_enabled(string vendor) {
+			auto shown_gpus = Config::getS("shown_gpus");
+			return shown_gpus.contains(vendor);
+		}
 
 		static bool read_stats(const CFDictionaryRef stats, gpu_info& gpu, const bool is_init) {
 			if (not stats) return false;
@@ -351,6 +359,23 @@ namespace Gpu {
 			return true;
 		}
 
+		static void apply_temp_fallback(const string& vendor, gpu_info& gpu) {
+			if (not gpu.temp.empty() and gpu.temp.back() > 0) return;
+
+			try {
+				Cpu::SMCConnection smc;
+				if (vendor == "amd") {
+					auto temp = smc.getValue("TGDD");
+					if (temp > 0) gpu.temp.push_back(temp);
+				}
+				else if (vendor == "intel") {
+					auto temp = smc.getValue("TCGC");
+					if (temp > 0) gpu.temp.push_back(temp);
+				}
+			}
+			catch (...) {}
+		}
+
 		bool init() {
 			if (initialized) return false;
 
@@ -368,7 +393,8 @@ namespace Gpu {
 				if (not props.get()) continue;
 
 				auto io_class = cf_string(CFDictionaryGetValue(props, CFSTR("IOClass")));
-				if (not lower_contains(io_class, "amd")) continue;
+				auto vendor = detect_vendor(io_class);
+				if (vendor.empty() or not vendor_enabled(vendor)) continue;
 
 				auto perf = (CFDictionaryRef)CFDictionaryGetValue(props, CFSTR("PerformanceStatistics"));
 				if (not perf) continue;
@@ -395,10 +421,13 @@ namespace Gpu {
 				};
 
 				accel_matches.push_back(acc_match);
+				accel_vendors.push_back(vendor);
 				auto model = match_model_from_pci(acc_match);
-				if (model.empty()) model = "AMD Graphics";
+				if (model.empty()) model = vendor == "amd" ? "AMD Graphics" : vendor == "intel" ? "Intel Graphics" : "Nvidia Graphics";
 				gpu_names.push_back(model);
 				read_stats(perf, gpu, true);
+				apply_temp_fallback(vendor, gpu);
+				if (gpu.temp.empty() or gpu.temp.back() <= 0) gpu.supported_functions.temp_info = false;
 			}
 
 			device_count = static_cast<unsigned int>(gpus.size() - base_index);
@@ -422,7 +451,8 @@ namespace Gpu {
 				if (not props.get()) continue;
 
 				auto io_class = cf_string(CFDictionaryGetValue(props, CFSTR("IOClass")));
-				if (not lower_contains(io_class, "amd")) continue;
+				auto vendor = detect_vendor(io_class);
+				if (vendor.empty()) continue;
 
 				auto perf = (CFDictionaryRef)CFDictionaryGetValue(props, CFSTR("PerformanceStatistics"));
 				if (not perf) continue;
@@ -434,6 +464,7 @@ namespace Gpu {
 				for (size_t i = 0; i < accel_matches.size(); ++i) {
 					if (accel_matches[i] != acc_match) continue;
 					read_stats(perf, gpus.at(base_index + i), false);
+					apply_temp_fallback(accel_vendors[i], gpus.at(base_index + i));
 					break;
 				}
 			}
@@ -826,8 +857,8 @@ namespace Gpu {
 	auto collect(bool no_update) -> vector<gpu_info>& {
 		if (Runner::stopping or (no_update and not gpus.empty())) return gpus;
 
-		if (AMDDiscrete::initialized)
-			AMDDiscrete::collect();
+		if (IOAcceleratorStats::initialized)
+			IOAcceleratorStats::collect();
 		if (AppleSilicon::initialized)
 			AppleSilicon::collect<0>(gpus.data() + AppleSilicon::base_index);
 
@@ -951,8 +982,8 @@ namespace Shared {
 		//? Init for namespace Gpu
 	#ifdef GPU_SUPPORT
 		auto shown_gpus = Config::getS("shown_gpus");
-		if (shown_gpus.contains("amd")) {
-			Gpu::AMDDiscrete::init();
+		if (shown_gpus.contains("amd") or shown_gpus.contains("intel") or shown_gpus.contains("nvidia")) {
+			Gpu::IOAcceleratorStats::init();
 		}
 		if (shown_gpus.contains("apple")) {
 			Gpu::AppleSilicon::init();
