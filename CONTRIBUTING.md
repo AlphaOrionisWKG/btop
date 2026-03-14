@@ -36,7 +36,7 @@
 
 * Make use of the standard algorithms library, watch [C++ Seasoning](https://www.youtube.com/watch?v=W2tWOdzgXHA) and [105 STL Algorithms](https://www.youtube.com/watch?v=bFSnXNIsK4A) for inspiration.
 
-* Use the included `fmt` library for string formatting, see issue [#535](https://github.com/aristocratos/btop/issues/535) for more info and examples.
+* Use the included `fmt` library for string formatting, see issue [#535](https://github.com/AlphaOrionisWKG/btop/issues/535) for more info and examples.
 
   * All new code should prefer `fmt::format` or `fmt::format_to` instead of
     manually concatenating strings for better performance.
@@ -57,4 +57,4 @@
 
 For questions open a new discussion thread or send a mail to jakob@qvantnet.com
 
-For proposing changes to this document create a [new issue](https://github.com/aristocratos/btop/issues/new/choose).
+For proposing changes to this document create a [new issue](https://github.com/AlphaOrionisWKG/btop/issues/new/choose).

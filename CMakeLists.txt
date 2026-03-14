@@ -12,7 +12,7 @@ endif()
 
 project("btop"
   DESCRIPTION "A monitor of resources"
-  HOMEPAGE_URL "https://github.com/aristocratos/btop"
+  HOMEPAGE_URL "https://github.com/AlphaOrionisWKG/btop"
   LANGUAGES CXX
 )
 

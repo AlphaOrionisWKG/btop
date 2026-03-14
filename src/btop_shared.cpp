@@ -186,7 +186,7 @@ bool set_priority(pid_t pid, int priority) {
 				return true;
 			}
 
-			// An incomplete regex throws, see issue https://github.com/aristocratos/btop/issues/1133
+			// An incomplete regex throws, see issue https://github.com/AlphaOrionisWKG/btop/issues/1133
 			try {
 				std::regex regex { filter.substr(1), std::regex::extended };
 				return std::regex_search(std::to_string(proc.pid), regex) || std::regex_search(proc.name, regex) ||

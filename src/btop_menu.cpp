@@ -213,7 +213,7 @@ namespace Menu {
 		{"Selected N", "Select new nice value for selected process."},
 		{"", " "},
 		{"", "For bug reporting and project updates, visit:"},
-		{"", "https://github.com/aristocratos/btop"},
+		{"", "https://github.com/AlphaOrionisWKG/btop"},
 	};
 
 	const vector<vector<vector<string>>> categories = {
@@ -229,7 +229,7 @@ namespace Menu {
 				"\"TTY\" for builtin 16-color theme.",
 				"",
 				"For theme updates see:",
-				"https://github.com/aristocratos/btop"},
+				"https://github.com/AlphaOrionisWKG/btop"},
 			{"theme_background",
 				"If the theme set background should be shown.",
 				"",

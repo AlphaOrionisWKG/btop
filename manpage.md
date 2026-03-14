@@ -62,7 +62,7 @@ starting with two dashes ('-'). A summary of options is included below.
 
 # BUGS
 
-The upstream bug tracker can be found at https://github.com/aristocratos/btop/issues.
+The upstream bug tracker can be found at https://github.com/AlphaOrionisWKG/btop/issues.
 
 # SEE ALSO
 

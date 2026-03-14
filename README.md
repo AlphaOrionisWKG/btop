@@ -11,16 +11,16 @@
 ![OpenBSD](https://img.shields.io/badge/-OpenBSD-black?logo=openbsd)
 ![Usage](https://img.shields.io/badge/Usage-System%20resource%20monitor-yellow)
 ![c++23](https://img.shields.io/badge/cpp-c%2B%2B23-green)
-![latest_release](https://img.shields.io/github/v/tag/aristocratos/btop?label=release)
+![latest_release](https://img.shields.io/github/v/tag/AlphaOrionisWKG/btop?label=release)
 [![Donate](https://img.shields.io/badge/-Donate-yellow?logo=paypal)](https://paypal.me/aristocratos)
 [![Sponsor](https://img.shields.io/badge/-Sponsor-red?logo=github)](https://github.com/sponsors/aristocratos)
 [![Coffee](https://img.shields.io/badge/-Buy%20me%20a%20Coffee-grey?logo=Ko-fi)](https://ko-fi.com/aristocratos)
 [![btop](https://snapcraft.io/btop/badge.svg)](https://snapcraft.io/btop)
-[![Continuous Build Linux](https://github.com/aristocratos/btop/actions/workflows/continuous-build-linux.yml/badge.svg)](https://github.com/aristocratos/btop/actions/workflows/continuous-build-linux.yml)
-[![Continuous Build macOS](https://github.com/aristocratos/btop/actions/workflows/continuous-build-macos.yml/badge.svg)](https://github.com/aristocratos/btop/actions/workflows/continuous-build-macos.yml)
-[![Continuous Build FreeBSD](https://github.com/aristocratos/btop/actions/workflows/continuous-build-freebsd.yml/badge.svg)](https://github.com/aristocratos/btop/actions/workflows/continuous-build-freebsd.yml)
-[![Continuous Build NetBSD](https://github.com/aristocratos/btop/actions/workflows/continuous-build-netbsd.yml/badge.svg)](https://github.com/aristocratos/btop/actions/workflows/continuous-build-netbsd.yml)
-[![Continuous Build OpenBSD](https://github.com/aristocratos/btop/actions/workflows/continuous-build-openbsd.yml/badge.svg)](https://github.com/aristocratos/btop/actions/workflows/continuous-build-openbsd.yml)
+[![Continuous Build Linux](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-linux.yml/badge.svg)](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-linux.yml)
+[![Continuous Build macOS](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-macos.yml/badge.svg)](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-macos.yml)
+[![Continuous Build FreeBSD](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-freebsd.yml/badge.svg)](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-freebsd.yml)
+[![Continuous Build NetBSD](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-netbsd.yml/badge.svg)](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-netbsd.yml)
+[![Continuous Build OpenBSD](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-openbsd.yml/badge.svg)](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-openbsd.yml)
 
 ## Index
 
@@ -105,14 +105,14 @@ Intel GPU support added, note that only GPU utilization, power usage and clock s
 
 NetBSD support added. Thanks to [@fraggerfox](https://github.com/fraggerfox) for contributions.
 
-See [CHANGELOG.md](CHANGELOG.md) and latest [release](https://github.com/aristocratos/btop/releases/latest) for detailed list of new features, bug fixes and new themes.
+See [CHANGELOG.md](CHANGELOG.md) and latest [release](https://github.com/AlphaOrionisWKG/btop/releases/latest) for detailed list of new features, bug fixes and new themes.
 
 ##### 7 January 2024
 
 Btop release v1.3.0
 
 Big release with GPU support added for Linux and platform support for OpenBSD. Big thanks to [@romner-set](https://github.com/romner-set) (GPU support) and [@joske](https://github.com/joske) (OpenBSD support) for contributions.
-And a multitude of bugfixes and small changes, see [CHANGELOG.md](CHANGELOG.md) and latest [release](https://github.com/aristocratos/btop/releases/latest) for detailed list and attributions.
+And a multitude of bugfixes and small changes, see [CHANGELOG.md](CHANGELOG.md) and latest [release](https://github.com/AlphaOrionisWKG/btop/releases/latest) for detailed list and attributions.
 
 See news entry below for more information regarding GPU support.
 
@@ -155,7 +155,7 @@ Since compatibility with Linux, macOS and FreeBSD are done, the focus going forw
 
 ##### 13 November 2021
 
-Release v1.1.0 with macOS support. Binaries in [continuous-build-macos](https://github.com/aristocratos/btop/actions/workflows/continuous-build-macos.yml) are only x86 for now.
+Release v1.1.0 with macOS support. Binaries in [continuous-build-macos](https://github.com/AlphaOrionisWKG/btop/actions/workflows/continuous-build-macos.yml) are only x86 for now.
 macOS binaries + installer are included for both x86 and ARM64 (Apple Silicon) in the releases.
 
 Big thank you to [@joske](https://github.com/joske) who wrote the vast majority of the implementation!
@@ -171,7 +171,7 @@ If you want to help out, test for bugs/fix bugs or just try out the branches:
 ```bash
 # Install and use Homebrew or MacPorts package managers for easy dependency installation
 brew install coreutils make gcc@11 lowdown
-git clone https://github.com/aristocratos/btop.git
+git clone https://github.com/AlphaOrionisWKG/btop.git
 cd btop
 git checkout OSX
 gmake
@@ -180,7 +180,7 @@ gmake
 **FreeBSD**
 ```bash
 sudo pkg install gmake gcc11 coreutils git lowdown
-git clone https://github.com/aristocratos/btop.git
+git clone https://github.com/AlphaOrionisWKG/btop.git
 cd btop
 git checkout freebsd
 gmake
@@ -192,7 +192,7 @@ Note that GNU make (`gmake`) is recommended but not required for macOS/OSX but i
 ##### 6 October 2021
 
 macOS development have been started by [@joske](https://github.com/joske), big thanks :)
-See branch [OSX](https://github.com/aristocratos/btop/tree/OSX) for current progress.
+See branch [OSX](https://github.com/aristocratos/btop/tree/OSX) for historical progress.
 
 ##### 18 September 2021
 
@@ -202,7 +202,7 @@ I will be providing statically compiled binaries for a range of architectures in
 
 For compilation GCC 11 is required.
 
-Please report any bugs to the [Issues](https://github.com/aristocratos/btop/issues/new?assignees=aristocratos&labels=bug&template=bug_report.md&title=%5BBUG%5D) page.
+Please report any bugs to the [Issues](https://github.com/AlphaOrionisWKG/btop/issues/new?labels=bug&template=bug_report.md&title=%5BBUG%5D) page.
 
 The development plan right now:
 
@@ -257,7 +257,7 @@ C++ version and continuation of [bashtop](https://github.com/aristocratos/bashto
 
 Btop++ uses the same theme files as bpytop and bashtop (some color values missing in bashtop themes).
 
-See [themes](https://github.com/aristocratos/btop/tree/main/themes) folder for available themes.
+See [themes](https://github.com/AlphaOrionisWKG/btop/tree/main/themes) folder for available themes.
 
 Btop searches the following directories for system themes:
 
@@ -385,7 +385,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 
 **Binaries for Linux are statically compiled with musl and work on kernel releases 2.6.39 and newer**
 
-1. **Download btop-(VERSION)-(ARCH)-(PLATFORM).tbz from [latest release](https://github.com/aristocratos/btop/releases/latest) and unpack to a new folder**
+1. **Download btop-(VERSION)-(ARCH)-(PLATFORM).tbz from [latest release](https://github.com/AlphaOrionisWKG/btop/releases/latest) and unpack to a new folder**
 
    **Notice! Use x86_64 for 64-bit x86 systems, i486 and i686 are 32-bit!**
 
@@ -525,7 +525,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 2. **Clone repository**
 
    ```bash
-   git clone https://github.com/aristocratos/btop.git
+   git clone https://github.com/AlphaOrionisWKG/btop.git
    cd btop
    ```
 
@@ -628,7 +628,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 2. **Clone the repository**
 
    ```bash
-   git clone https://github.com/aristocratos/btop.git && cd btop
+   git clone https://github.com/AlphaOrionisWKG/btop.git && cd btop
    ``````
 
 3. **Compile**
@@ -702,7 +702,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 2. **Clone repository**
 
    ```bash
-   git clone https://github.com/aristocratos/btop.git
+   git clone https://github.com/AlphaOrionisWKG/btop.git
    cd btop
    ```
 3. **Compile**
@@ -797,7 +797,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 2. **Clone the repository**
 
    ```bash
-   git clone https://github.com/aristocratos/btop.git && cd btop
+   git clone https://github.com/AlphaOrionisWKG/btop.git && cd btop
    ```
 
 3. **Compile**
@@ -870,7 +870,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 2. **Clone repository**
 
    ```bash
-   git clone https://github.com/aristocratos/btop.git
+   git clone https://github.com/AlphaOrionisWKG/btop.git
    cd btop
    ```
 
@@ -959,7 +959,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 2. **Clone the repository**
 
    ```bash
-   git clone https://github.com/aristocratos/btop.git && cd btop
+   git clone https://github.com/AlphaOrionisWKG/btop.git && cd btop
    ```
 
 3. **Compile**
@@ -1032,7 +1032,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 2. **Clone repository**
 
    ```bash
-   git clone https://github.com/aristocratos/btop.git
+   git clone https://github.com/AlphaOrionisWKG/btop.git
    cd btop
    ```
 
@@ -1122,7 +1122,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 2. **Clone the repository**
 
    ```bash
-   git clone https://github.com/aristocratos/btop.git && cd btop
+   git clone https://github.com/AlphaOrionisWKG/btop.git && cd btop
    ```
 
 3. **Compile**
@@ -1189,7 +1189,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 2. **Clone repository**
 
    ```bash
-   git clone https://github.com/aristocratos/btop.git
+   git clone https://github.com/AlphaOrionisWKG/btop.git
    cd btop
    ```
 
@@ -1280,7 +1280,7 @@ See [GPU compatibility](#gpu-compatibility) section for more about compiling wit
 2. **Clone the repository**
 
    ```bash
-   git clone https://github.com/aristocratos/btop.git && cd btop
+   git clone https://github.com/AlphaOrionisWKG/btop.git && cd btop
    ```
 
 3. **Compile**

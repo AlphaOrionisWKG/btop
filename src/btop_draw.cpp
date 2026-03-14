@@ -1583,7 +1583,7 @@ namespace Proc {
 	Draw::TextEdit filter;
 	Draw::Graph detailed_cpu_graph;
 	Draw::Graph detailed_mem_graph;
-	int user_size, thread_size, prog_size, cmd_size, tree_size;
+	int user_size, thread_size, prog_size, cmd_size, tree_size, gpu_size, vram_size;
 	int dgraph_x, dgraph_width, d_width, d_x, d_y;
 	bool previous_proc_banner_state = false;
 	atomic<bool> resized (false);
@@ -1770,11 +1770,14 @@ namespace Proc {
 				if (Input::mouse_mappings.contains(key)) Input::mouse_mappings.erase(key);
 
 			//? Adapt sizes of text fields
+			gpu_size = (width >= 100 ? 5 : 0);
+			vram_size = (width >= 112 ? 7 : 0);
 			user_size = (width < 75 ? 5 : 10);
 			thread_size = (width < 75 ? - 1 : 4);
-			prog_size = (width > 70 ? 16 : ( width > 55 ? 8 : width - user_size - thread_size - 33));
-			cmd_size = (width > 55 ? width - prog_size - user_size - thread_size - 33 : -1);
-			tree_size = width - user_size - thread_size - 23;
+			const int extra_metric_width = (gpu_size > 0 ? gpu_size + 1 : 0) + (vram_size > 0 ? vram_size + 1 : 0);
+			prog_size = (width > 70 ? 16 : ( width > 55 ? 8 : width - user_size - thread_size - 33 - extra_metric_width));
+			cmd_size = (width > 55 ? width - prog_size - user_size - thread_size - 33 - extra_metric_width : -1);
+			tree_size = width - user_size - thread_size - 23 - extra_metric_width;
 			if (not show_graphs) {
 				cmd_size += 5;
 				tree_size += 5;
@@ -1958,6 +1961,8 @@ namespace Proc {
 			out += (thread_size > 0 ? Mv::l(4) + "Threads: " : "")
 					+ ljust("User:", user_size) + ' '
 					+ rjust((mem_bytes ? "MemB" : "Mem%"), 5) + ' '
+					+ (gpu_size > 0 ? rjust("GPU%", gpu_size) + ' ' : "")
+					+ (vram_size > 0 ? rjust("VRAM", vram_size) + ' ' : "")
 					+ rjust("Cpu%", (show_graphs ? 10 : 5)) + Fx::ub;
 		}
 		//* End of redraw block
@@ -2118,6 +2123,17 @@ namespace Proc {
 				if (mem_str.ends_with('.')) mem_str.pop_back();
 				mem_str += '%';
 			}
+			string gpu_str;
+			if (gpu_size > 0) {
+				const double gpu_p = clamp((double)p.gpu / 100.0, 0.0, 100.0);
+				gpu_str = gpu_p < 0.01 ? "0" : fmt::format("{:.1f}", gpu_p);
+				if ((int)gpu_str.size() > gpu_size - 1) gpu_str.resize(gpu_size - 1);
+				if (gpu_str.ends_with('.')) gpu_str.pop_back();
+				gpu_str += '%';
+			}
+			string vram_str = (vram_size > 0 ? floating_humanizer(p.vram, true) : "");
+			if (vram_size > 0 and (int)ulen(vram_str, true) > vram_size)
+				vram_str = uresize(vram_str, vram_size, true);
 
 			// Shorten process thread representation when larger than 5 digits: 10000 -> 10K ...
 			const std::string proc_threads_string = [&] {
@@ -2131,6 +2147,8 @@ namespace Proc {
 			out += (thread_size > 0 ? t_color + rjust(proc_threads_string, thread_size) + ' ' + end : "" )
 				+ g_color + ljust((cmp_greater(p.user.size(), user_size) ? p.user.substr(0, user_size - 1) + '+' : p.user), user_size) + ' '
 				+ m_color + rjust(mem_str, 5) + end + ' '
+				+ (gpu_size > 0 ? c_color + rjust(gpu_str, gpu_size) + end + ' ' : "")
+				+ (vram_size > 0 ? m_color + rjust(vram_str, vram_size) + end + ' ' : "")
 				+ (is_selected or is_followed ? "" : Theme::c("inactive_fg")) + (show_graphs ? graph_bg * 5: "")
 				+ (p_graphs.contains(p.pid) ? Mv::l(5) + c_color + p_graphs.at(p.pid)({(p.cpu_p >= 0.1 and p.cpu_p < 5 ? 5ll : (long long)round(p.cpu_p))}, data_same) : "") + end + ' '
 				+ c_color + rjust(cpu_str, 4) + "  " + end;

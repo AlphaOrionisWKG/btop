@@ -11,9 +11,9 @@ grade: stable
 confinement: strict
 compression: lzo
 
-contact: https://github.com/kz6fittycent/btop/issues
-issues: https://github.com/kz6fittycent/btop/issues
-source-code: https://github.com/aristocratos/btop
+contact: https://github.com/AlphaOrionisWKG/btop/issues
+issues: https://github.com/AlphaOrionisWKG/btop/issues
+source-code: https://github.com/AlphaOrionisWKG/btop
 
 platforms:
   amd64:
@@ -42,7 +42,7 @@ apps:
 
 parts:
   btop:
-    source: https://github.com/aristocratos/btop
+    source: https://github.com/AlphaOrionisWKG/btop
     source-type: git
     plugin: make
     make-parameters:

@@ -267,8 +267,10 @@ namespace Cli {
 			"  {2}-u, --update{1} <ms>       Set an initial update rate in milliseconds\n"
 			"  {2}    --default-config{1}    Print default config to standard output\n"
 			"  {2}-h, --help{1}              Show this help message and exit\n"
-			"  {2}-V, --version{1}           Show a version message and exit (more with --version)\n",
-			BOLD_UNDERLINE, RESET, BOLD
+			"  {2}-V, --version{1}           Show a version message and exit (more with --version)\n"
+			"\n"
+			"{0}Project:{1} {3}\n",
+			BOLD_UNDERLINE, RESET, BOLD, FORK_URL
 		);
 	}
 
