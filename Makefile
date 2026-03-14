@@ -152,6 +152,8 @@ ifeq ($(BUILD_TYPE),Release)
 endif
 
 GIT_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null || true)
+FORK_NAME ?= AlphaOrionisWKG/btop
+FORK_URL ?= https://github.com/AlphaOrionisWKG/btop
 CONFIGURE_COMMAND := $(MAKE) STATIC=$(STATIC)
 ifeq ($(PLATFORM_LC),linux)
 	CONFIGURE_COMMAND +=  GPU_SUPPORT=$(GPU_SUPPORT) RSMI_STATIC=$(RSMI_STATIC)
@@ -275,8 +277,8 @@ config.h: $(BUILDDIR)/config.h
 
 $(BUILDDIR)/config.h: $(SRCDIR)/config.h.in | directories
 	@$(QUIET) || printf "\033[1mConfiguring $(BUILDDIR)/config.h\033[0m\n"
-	@$(VERBOSE) || printf 'sed -e "s|@GIT_COMMIT@|$(GIT_COMMIT)|" -e "s|@CONFIGURE_COMMAND@|$(CONFIGURE_COMMAND)|" -e "s|@COMPILER@|$(CXX)|" -e "s|@COMPILER_VERSION@|$(CXX_VERSION)|" $< | tee $@ > /dev/null\n'
-	@sed -e "s|@GIT_COMMIT@|$(GIT_COMMIT)|" -e "s|@CONFIGURE_COMMAND@|$(CONFIGURE_COMMAND)|" -e "s|@COMPILER@|$(CXX)|" -e "s|@COMPILER_VERSION@|$(CXX_VERSION)|" $< | tee $@ > /dev/null
+	@$(VERBOSE) || printf 'sed -e "s|@GIT_COMMIT@|$(GIT_COMMIT)|" -e "s|@FORK_NAME@|$(FORK_NAME)|" -e "s|@FORK_URL@|$(FORK_URL)|" -e "s|@CONFIGURE_COMMAND@|$(CONFIGURE_COMMAND)|" -e "s|@COMPILER@|$(CXX)|" -e "s|@COMPILER_VERSION@|$(CXX_VERSION)|" $< | tee $@ > /dev/null\n'
+	@sed -e "s|@GIT_COMMIT@|$(GIT_COMMIT)|" -e "s|@FORK_NAME@|$(FORK_NAME)|" -e "s|@FORK_URL@|$(FORK_URL)|" -e "s|@CONFIGURE_COMMAND@|$(CONFIGURE_COMMAND)|" -e "s|@COMPILER@|$(CXX)|" -e "s|@COMPILER_VERSION@|$(CXX_VERSION)|" $< | tee $@ > /dev/null
 
 #? Man page
 btop.1: manpage.md | directories

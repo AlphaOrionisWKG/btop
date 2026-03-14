@@ -39,6 +39,12 @@ static void version() noexcept {
 	} else {
 		fmt::println("btop version: {}{}+{}{}", BOLD, Global::Version, GIT_COMMIT, RESET);
 	}
+	if constexpr (not FORK_NAME.empty()) {
+		fmt::println("Fork: {}", FORK_NAME);
+	}
+	if constexpr (not FORK_URL.empty()) {
+		fmt::println("Fork URL: {}", FORK_URL);
+	}
 }
 
 static void build_info() noexcept {
