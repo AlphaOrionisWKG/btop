@@ -199,13 +199,253 @@ namespace Mem {
 namespace Gpu {
 	vector<gpu_info> gpus;
 
+	static string cf_string(CFTypeRef value) {
+		if (not value) return "";
+
+		if (CFGetTypeID(value) == CFStringGetTypeID()) {
+			char buf[512];
+			if (CFStringGetCString((CFStringRef)value, buf, sizeof(buf), kCFStringEncodingUTF8))
+				return string(buf);
+		}
+		else if (CFGetTypeID(value) == CFDataGetTypeID()) {
+			auto data = (CFDataRef)value;
+			auto len = CFDataGetLength(data);
+			if (len <= 0) return "";
+			string out(reinterpret_cast<const char*>(CFDataGetBytePtr(data)), static_cast<size_t>(len));
+			auto nul = out.find('\0');
+			if (nul != string::npos) out.resize(nul);
+			return out;
+		}
+
+		return "";
+	}
+
+	static long long cf_int(CFTypeRef value, long long fallback = 0) {
+		if (not value or CFGetTypeID(value) != CFNumberGetTypeID()) return fallback;
+		long long out = fallback;
+		CFNumberGetValue((CFNumberRef)value, kCFNumberLongLongType, &out);
+		return out;
+	}
+
+	static bool lower_contains(string haystack, string needle) {
+		haystack = str_to_lower(haystack);
+		needle = str_to_lower(needle);
+		return haystack.contains(needle);
+	}
+
+	static auto get_registry_props(io_registry_entry_t entry) -> CFRef<CFMutableDictionaryRef> {
+		CFMutableDictionaryRef props_raw = nullptr;
+		if (IORegistryEntryCreateCFProperties(entry, &props_raw, kCFAllocatorDefault, 0) != kIOReturnSuccess or not props_raw)
+			return {};
+		return CFRef<CFMutableDictionaryRef>(props_raw);
+	}
+
+	static string pci_match_key(CFDataRef device_id, CFDataRef vendor_id) {
+		if (not device_id or not vendor_id) return "";
+		if (CFDataGetLength(device_id) < 2 or CFDataGetLength(vendor_id) < 2) return "";
+
+		auto dev = CFDataGetBytePtr(device_id);
+		auto ven = CFDataGetBytePtr(vendor_id);
+		return fmt::format("0x{:02x}{:02x}{:02x}{:02x}", dev[1], dev[0], ven[1], ven[0]);
+	}
+
+	static string match_model_from_pci(string acc_match) {
+		if (acc_match.empty()) return "";
+
+		io_iterator_t iter_raw;
+		CFMutableDictionaryRef match_dict = IOServiceMatching("IOPCIDevice");
+		if (IOServiceGetMatchingServices(kIOMainPortDefault, match_dict, &iter_raw) != kIOReturnSuccess)
+			return "";
+		IORef iter(iter_raw);
+
+		io_object_t entry_raw;
+		while ((entry_raw = IOIteratorNext(iter)) != 0) {
+			IORef entry(entry_raw);
+			auto props = get_registry_props(entry);
+			if (not props.get()) continue;
+
+			auto io_name = cf_string(CFDictionaryGetValue(props, CFSTR("IOName")));
+			if (io_name != "display") continue;
+
+			auto key = pci_match_key(
+				(CFDataRef)CFDictionaryGetValue(props, CFSTR("device-id")),
+				(CFDataRef)CFDictionaryGetValue(props, CFSTR("vendor-id"))
+			);
+			if (key.empty() or not str_to_lower(acc_match).contains(key)) continue;
+
+			auto model = cf_string(CFDictionaryGetValue(props, CFSTR("model")));
+			if (not model.empty()) return model;
+		}
+
+		return "";
+	}
+
 	//? Stub shutdown for backends not available on macOS
 	namespace Nvml { bool shutdown() { return false; } }
 	namespace Rsmi { bool shutdown() { return false; } }
 
+	namespace AMDDiscrete {
+		bool initialized = false;
+		size_t base_index = 0;
+		unsigned int device_count = 0;
+		vector<string> accel_matches;
+
+		static bool read_stats(const CFDictionaryRef stats, gpu_info& gpu, const bool is_init) {
+			if (not stats) return false;
+
+			const auto read_value = [&](CFStringRef key) -> long long {
+				return cf_int(CFDictionaryGetValue(stats, key), -1);
+			};
+
+			long long util = read_value(CFSTR("GPU Activity(%)"));
+			if (util < 0) util = read_value(CFSTR("Device Utilization %"));
+			if (util >= 0) {
+				util = clamp(util, 0ll, 100ll);
+				gpu.gpu_percent.at("gpu-totals").push_back(util);
+				gpu.mem_utilization_percent.push_back(util);
+			}
+			else if (is_init) {
+				gpu.supported_functions.gpu_utilization = false;
+				gpu.supported_functions.mem_utilization = false;
+			}
+
+			auto temp = read_value(CFSTR("Temperature(C)"));
+			if (temp > 0) gpu.temp.push_back(temp);
+			else if (is_init) gpu.supported_functions.temp_info = false;
+
+			auto core_clock = read_value(CFSTR("Core Clock(MHz)"));
+			if (core_clock >= 0) gpu.gpu_clock_speed = static_cast<unsigned int>(core_clock);
+			else if (is_init) gpu.supported_functions.gpu_clock = false;
+
+			auto mem_clock = read_value(CFSTR("Memory Clock(MHz)"));
+			if (mem_clock >= 0) gpu.mem_clock_speed = mem_clock;
+			else if (is_init) gpu.supported_functions.mem_clock = false;
+
+			auto power_w = read_value(CFSTR("Total Power(W)"));
+			if (power_w >= 0) {
+				gpu.pwr_usage = power_w * 1000;
+				gpu.pwr_max_usage = max(gpu.pwr_max_usage, gpu.pwr_usage);
+				if (gpu.pwr_max_usage > 0) {
+					gpu.gpu_percent.at("gpu-pwr-totals").push_back(
+						clamp(static_cast<long long>(round(static_cast<double>(gpu.pwr_usage) * 100.0 / static_cast<double>(gpu.pwr_max_usage))), 0ll, 100ll)
+					);
+				}
+			}
+			else if (is_init) gpu.supported_functions.pwr_usage = false;
+
+			auto mem_used = read_value(CFSTR("inUseVidMemoryBytes"));
+			auto mem_free = read_value(CFSTR("vramFreeBytes"));
+			if (mem_used >= 0) gpu.mem_used = mem_used;
+			else if (is_init) gpu.supported_functions.mem_used = false;
+
+			if (mem_used >= 0 and mem_free >= 0) {
+				gpu.mem_total = mem_used + mem_free;
+				if (gpu.mem_total > 0) {
+					gpu.gpu_percent.at("gpu-vram-totals").push_back(
+						clamp(static_cast<long long>(round(static_cast<double>(gpu.mem_used) * 100.0 / static_cast<double>(gpu.mem_total))), 0ll, 100ll)
+					);
+				}
+			}
+			else if (is_init) gpu.supported_functions.mem_total = false;
+
+			return true;
+		}
+
+		bool init() {
+			if (initialized) return false;
+
+			io_iterator_t iter_raw;
+			CFMutableDictionaryRef match_dict = IOServiceMatching("IOAccelerator");
+			if (IOServiceGetMatchingServices(kIOMainPortDefault, match_dict, &iter_raw) != kIOReturnSuccess)
+				return false;
+			IORef iter(iter_raw);
+
+			base_index = gpus.size();
+			io_object_t entry_raw;
+			while ((entry_raw = IOIteratorNext(iter)) != 0) {
+				IORef entry(entry_raw);
+				auto props = get_registry_props(entry);
+				if (not props.get()) continue;
+
+				auto io_class = cf_string(CFDictionaryGetValue(props, CFSTR("IOClass")));
+				if (not lower_contains(io_class, "amd")) continue;
+
+				auto perf = (CFDictionaryRef)CFDictionaryGetValue(props, CFSTR("PerformanceStatistics"));
+				if (not perf) continue;
+
+				auto acc_match = cf_string(CFDictionaryGetValue(props, CFSTR("IOPCIMatch")));
+				if (acc_match.empty())
+					acc_match = cf_string(CFDictionaryGetValue(props, CFSTR("IOPCIPrimaryMatch")));
+
+				gpus.emplace_back();
+				auto& gpu = gpus.back();
+				gpu.supported_functions = {
+					.gpu_utilization = true,
+					.mem_utilization = true,
+					.gpu_clock = true,
+					.mem_clock = true,
+					.pwr_usage = true,
+					.pwr_state = false,
+					.temp_info = true,
+					.mem_total = true,
+					.mem_used = true,
+					.pcie_txrx = false,
+					.encoder_utilization = false,
+					.decoder_utilization = false
+				};
+
+				accel_matches.push_back(acc_match);
+				auto model = match_model_from_pci(acc_match);
+				if (model.empty()) model = "AMD Graphics";
+				gpu_names.push_back(model);
+				read_stats(perf, gpu, true);
+			}
+
+			device_count = static_cast<unsigned int>(gpus.size() - base_index);
+			initialized = (device_count > 0);
+			return initialized;
+		}
+
+		bool collect() {
+			if (not initialized) return false;
+
+			io_iterator_t iter_raw;
+			CFMutableDictionaryRef match_dict = IOServiceMatching("IOAccelerator");
+			if (IOServiceGetMatchingServices(kIOMainPortDefault, match_dict, &iter_raw) != kIOReturnSuccess)
+				return false;
+			IORef iter(iter_raw);
+
+			io_object_t entry_raw;
+			while ((entry_raw = IOIteratorNext(iter)) != 0) {
+				IORef entry(entry_raw);
+				auto props = get_registry_props(entry);
+				if (not props.get()) continue;
+
+				auto io_class = cf_string(CFDictionaryGetValue(props, CFSTR("IOClass")));
+				if (not lower_contains(io_class, "amd")) continue;
+
+				auto perf = (CFDictionaryRef)CFDictionaryGetValue(props, CFSTR("PerformanceStatistics"));
+				if (not perf) continue;
+
+				auto acc_match = cf_string(CFDictionaryGetValue(props, CFSTR("IOPCIMatch")));
+				if (acc_match.empty())
+					acc_match = cf_string(CFDictionaryGetValue(props, CFSTR("IOPCIPrimaryMatch")));
+
+				for (size_t i = 0; i < accel_matches.size(); ++i) {
+					if (accel_matches[i] != acc_match) continue;
+					read_stats(perf, gpus.at(base_index + i), false);
+					break;
+				}
+			}
+
+			return true;
+		}
+	}
+
 	//? Apple Silicon GPU data collection via IOReport
 	namespace AppleSilicon {
 		bool initialized = false;
+		size_t base_index = 0;
 		unsigned int device_count = 0;
 
 		//? Forward declaration
@@ -314,6 +554,7 @@ namespace Gpu {
 				return false;
 			}
 
+			base_index = gpus.size();
 			device_count = 1; //? Apple Silicon has one integrated GPU
 			gpus.resize(gpus.size() + device_count);
 			gpu_names.resize(gpu_names.size() + device_count);
@@ -325,7 +566,7 @@ namespace Gpu {
 			prev_sample_time = get_mach_time_ms();
 
 			//? Run init collect to populate names and supported functions
-			collect<1>(gpus.data());
+			collect<1>(gpus.data() + base_index);
 
 			return true;
 		}
@@ -399,7 +640,7 @@ namespace Gpu {
 			if constexpr (is_init) {
 				//? Device name
 				string chip = get_chip_name();
-				gpu_names[0] = chip + " GPU";
+				gpu_names[base_index] = chip + " GPU";
 
 				//? Power max (typical Apple Silicon GPU TDP ~15-20W)
 				gpus_slice[0].pwr_max_usage = 20000; // 20W in mW
@@ -585,7 +826,10 @@ namespace Gpu {
 	auto collect(bool no_update) -> vector<gpu_info>& {
 		if (Runner::stopping or (no_update and not gpus.empty())) return gpus;
 
-		AppleSilicon::collect<0>(gpus.data());
+		if (AMDDiscrete::initialized)
+			AMDDiscrete::collect();
+		if (AppleSilicon::initialized)
+			AppleSilicon::collect<0>(gpus.data() + AppleSilicon::base_index);
 
 		//* Calculate averages
 		long long avg = 0;
@@ -707,6 +951,9 @@ namespace Shared {
 		//? Init for namespace Gpu
 	#ifdef GPU_SUPPORT
 		auto shown_gpus = Config::getS("shown_gpus");
+		if (shown_gpus.contains("amd")) {
+			Gpu::AMDDiscrete::init();
+		}
 		if (shown_gpus.contains("apple")) {
 			Gpu::AppleSilicon::init();
 		}
