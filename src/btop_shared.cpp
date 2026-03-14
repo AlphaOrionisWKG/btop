@@ -109,8 +109,10 @@ bool set_priority(pid_t pid, int priority) {
 			case 3: rng::stable_sort(proc_vec, rng::less{}, &proc_info::threads);	break;
 			case 4: rng::stable_sort(proc_vec, rng::greater{}, &proc_info::user); 		break;
 			case 5: rng::stable_sort(proc_vec, rng::less{}, &proc_info::mem); 		break;
-			case 6: rng::stable_sort(proc_vec, rng::less{}, &proc_info::cpu_p);		break;
-			case 7: rng::stable_sort(proc_vec, rng::less{}, &proc_info::cpu_c);		break;
+			case 6: rng::stable_sort(proc_vec, rng::less{}, &proc_info::gpu); 		break;
+			case 7: rng::stable_sort(proc_vec, rng::less{}, &proc_info::vram); 		break;
+			case 8: rng::stable_sort(proc_vec, rng::less{}, &proc_info::cpu_p);		break;
+			case 9: rng::stable_sort(proc_vec, rng::less{}, &proc_info::cpu_c);		break;
 			}
 		}
 		else {
@@ -121,8 +123,10 @@ bool set_priority(pid_t pid, int priority) {
 			case 3: rng::stable_sort(proc_vec, rng::greater{}, &proc_info::threads);	break;
 			case 4: rng::stable_sort(proc_vec, rng::less{}, &proc_info::user);		break;
 			case 5: rng::stable_sort(proc_vec, rng::greater{}, &proc_info::mem); 		break;
-			case 6: rng::stable_sort(proc_vec, rng::greater{}, &proc_info::cpu_p);   	break;
-			case 7: rng::stable_sort(proc_vec, rng::greater{}, &proc_info::cpu_c);   	break;
+			case 6: rng::stable_sort(proc_vec, rng::greater{}, &proc_info::gpu);   	break;
+			case 7: rng::stable_sort(proc_vec, rng::greater{}, &proc_info::vram);   	break;
+			case 8: rng::stable_sort(proc_vec, rng::greater{}, &proc_info::cpu_p);   	break;
+			case 9: rng::stable_sort(proc_vec, rng::greater{}, &proc_info::cpu_c);   	break;
 			}
 		}
 
@@ -150,16 +154,20 @@ bool set_priority(pid_t pid, int priority) {
 				switch (v_index(sort_vector, sorting)) {
 				case 3: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().threads < b.entry.get().threads; });	break;
 				case 5: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().mem < b.entry.get().mem; });	break;
-				case 6: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().cpu_p < b.entry.get().cpu_p; });	break;
-				case 7: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().cpu_c < b.entry.get().cpu_c; });	break;
+				case 6: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().gpu < b.entry.get().gpu; });	break;
+				case 7: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().vram < b.entry.get().vram; });	break;
+				case 8: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().cpu_p < b.entry.get().cpu_p; });	break;
+				case 9: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().cpu_c < b.entry.get().cpu_c; });	break;
 				}
 			}
 			else {
 				switch (v_index(sort_vector, sorting)) {
 				case 3: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().threads > b.entry.get().threads; });	break;
 				case 5: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().mem > b.entry.get().mem; });	break;
-				case 6: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().cpu_p > b.entry.get().cpu_p; });	break;
-				case 7: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().cpu_c > b.entry.get().cpu_c; });	break;
+				case 6: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().gpu > b.entry.get().gpu; });	break;
+				case 7: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().vram > b.entry.get().vram; });	break;
+				case 8: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().cpu_p > b.entry.get().cpu_p; });	break;
+				case 9: rng::stable_sort(proc_vec, [](const auto& a, const auto& b) { return a.entry.get().cpu_c > b.entry.get().cpu_c; });	break;
 				}
 			}
 		}

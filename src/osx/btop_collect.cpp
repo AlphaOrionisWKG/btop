@@ -1876,6 +1876,30 @@ namespace Proc {
 	detail_container detailed;
 	static std::unordered_set<size_t> dead_procs;
 
+	static void collect_graphics_metrics(proc_info& proc) {
+		proc.gpu = 0;
+		proc.vram = 0;
+
+		mach_port_t task = 0;
+		if (task_name_for_pid(mach_task_self(), static_cast<int>(proc.pid), &task) != KERN_SUCCESS or task == 0)
+			return;
+
+		task_power_info_v2_data_t power_info {};
+		mach_msg_type_number_t power_count = TASK_POWER_INFO_V2_COUNT;
+		if (task_info(task, TASK_POWER_INFO_V2, reinterpret_cast<task_info_t>(&power_info), &power_count) == KERN_SUCCESS) {
+			proc.gpu = power_info.gpu_energy.task_gpu_utilisation;
+		}
+
+		task_vm_info_data_t vm_info {};
+		mach_msg_type_number_t vm_count = TASK_VM_INFO_COUNT;
+		if (task_info(task, TASK_VM_INFO, reinterpret_cast<task_info_t>(&vm_info), &vm_count) == KERN_SUCCESS) {
+			proc.vram = static_cast<uint64_t>(max<int64_t>(0, vm_info.ledger_tag_graphics_footprint))
+				+ static_cast<uint64_t>(max<int64_t>(0, vm_info.ledger_tag_graphics_footprint_compressed));
+		}
+
+		mach_port_deallocate(mach_task_self(), task);
+	}
+
 	string get_status(char s) {
 		if (s & SRUN) return "Running";
 		if (s & SSLEEP) return "Sleeping";
@@ -1940,6 +1964,7 @@ namespace Proc {
 	//* Collects and sorts process information from /proc
 	auto collect(bool no_update) -> vector<proc_info> & {
 		const auto &sorting = Config::getS("proc_sorting");
+		const bool wants_graphics_metrics = is_in(sorting, "gpu", "vram");
 		auto reverse = Config::getB("proc_reversed");
 		const auto &filter = Config::getS("proc_filter");
 		auto per_core = Config::getB("proc_per_core");
@@ -1964,6 +1989,9 @@ namespace Proc {
 
 		//* Use pids from last update if only changing filter, sorting or tree options
 		if (no_update and not current_procs.empty()) {
+			if (wants_graphics_metrics) {
+				for (auto& proc : current_procs) collect_graphics_metrics(proc);
+			}
 			if (show_detailed and detailed_pid != detailed.last_pid) _collect_details(detailed_pid, current_procs);
 		} else {
 			//* ---------------------------------------------Collection start----------------------------------------------
@@ -2095,6 +2123,7 @@ namespace Proc {
 
 					//? Update cached value with latest cpu times
 					new_proc.cpu_t = cpu_t;
+					if (wants_graphics_metrics) collect_graphics_metrics(new_proc);
 
 					if (show_detailed and not got_detailed and new_proc.pid == detailed_pid) {
 						got_detailed = true;

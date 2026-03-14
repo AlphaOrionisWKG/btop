@@ -373,6 +373,8 @@ namespace Proc {
 		"threads",
 		"user",
 		"memory",
+		"gpu",
+		"vram",
 		"cpu direct",
 		"cpu lazy",
 	};
@@ -402,6 +404,8 @@ namespace Proc {
 		int name_offset{};
 		string user{};          // defaults to ""
 		uint64_t mem{};
+		uint64_t gpu{};
+		uint64_t vram{};
 		double cpu_p{};         // defaults to = 0.0
 		double cpu_c{};         // defaults to = 0.0
 		char state = '0';
